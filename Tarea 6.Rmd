@@ -1,34 +1,36 @@
 ---
-title: "Tarea 6. "
-subtitle: "Modelos de Supervivencia y de Series de Tiempo"
-author: 
-  - Ávila Argüello Carlos - 06
-  - Bonilla Cruz José Armando - 10
-  - Luna Gutiérrez Yanely - 51
-  - Reyes González Belén - 64
-  - Rivera Mata Dante Tristán - 67
+title: 'Tarea 6. '
+author:
+- Ávila Argüello Carlos - 06
+- Bonilla Cruz José Armando - 10
+- Luna Gutiérrez Yanely - 51
+- Reyes González Belén - 64
+- Rivera Mata Dante Tristán - 67
+subtitle: Modelos de Supervivencia y de Series de Tiempo
 output:
-    pdf_document:
-        latex_engine: xelatex
+  html_document:
+    df_print: paged
+  pdf_document:
+    latex_engine: xelatex
 header includes:
-  - \usepackage[T1]{fontenc}
-  - \usepackage[utf8]{inputenc}
-  - \usepackage{amsmath}
-  - \usepackage{amssymb}
-  - \usepackage{amsthm}
-  - \usepackage{amsfonts}
-  - \usepackage{multirow}
-  - \usepackage{booktabs}
-  - \usepackage{graphicx}
-  - \usepackage{xcolor}
-  - \usepackage{listings} 
-  - \usepackage{setspace}
-  - \setlength{\parindent}{0in}
-  - \usepackage{float}
-  - \usepackage{fancyhdr}
-  - \pagestyle{fancy} 
-  - \fancyhf{}
-  - \usepackage{xspace}
+- \usepackage[T1]{fontenc}
+- \usepackage[utf8]{inputenc}
+- \usepackage{amsmath}
+- \usepackage{amssymb}
+- \usepackage{amsthm}
+- \usepackage{amsfonts}
+- \usepackage{multirow}
+- \usepackage{booktabs}
+- \usepackage{graphicx}
+- \usepackage{xcolor}
+- \usepackage{listings}
+- \usepackage{setspace}
+- \setlength{\parindent}{0in}
+- \usepackage{float}
+- \usepackage{fancyhdr}
+- \pagestyle{fancy}
+- \fancyhf{}
+- \usepackage{xspace}
 ---
 
 Utiliza la base de datos de R llamada ovarian y realiza lo siguiente:
@@ -116,7 +118,7 @@ Notemos que hay mayor presencia de censuras que se pueden atribuir a los costos 
 ```{r out.width = "75%", fig.align='center', echo=FALSE}
 ggplot(cancer_ovario, aes(x = resid.ds, fill = ..x..))+
   geom_bar(color = 'white', alpha = 0.8)+
-  scale_fill_gradient(low='lightblue', high='dodgerblue3')+
+  scale_fill_gradient(low='#BCF5A9', high='#F5F6CE')+
   labs(y = 'Frecuencia', x = 'No o Sí', subtitle = 'Información sobre el cáncer de ovario', title = 'Secuelas') + theme_minimal() +
 theme(plot.title = element_text(size = 12, hjust = 0.5),
       axis.title.x = element_text(size = 10, color = 'grey20'),
@@ -124,12 +126,12 @@ theme(plot.title = element_text(size = 12, hjust = 0.5),
       legend.position="none")
 ```
 
-Notemos que la mayoría de las personas en el estudio presentaron secuelas relacionadas con el tratamiento, esto puede dar pauta a estudios futuros y el análisis del tratamiento. Por la perspetiva estadística, la función de supervivencia puede verse afectada.
+Notemos que la mayoría de las personas en el estudio presentaron secuelas relacionadas con el tratamiento, esto puede dar pauta a estudios futuros y el análisis del tratamiento. Desde la perspetiva estadística, la función de supervivencia puede verse afectada.
 
 ```{r out.width = "70%", fig.align='center', echo=FALSE}
 ggplot(cancer_ovario, aes(x = rx, fill = ..x..))+
   geom_bar(color = 'white', alpha = 0.8)+
-  scale_fill_gradient(low='lightblue', high='dodgerblue3')+
+  scale_fill_gradient(low='#F6CED8', high='#FA5858')+
   labs(y = 'Frecuencia', subtitle = 'Información sobre el cáncer de ovario', title = 'Tipo de tratamiento') + theme_minimal() +
 theme(plot.title = element_text(size = 12, hjust = 0.5),
       axis.title.x = element_text(size = 10, color = 'grey20'),
@@ -152,7 +154,7 @@ theme(plot.title = element_text(size = 12, hjust = 0.5),
 
 La mayoría de los pacienten tienen una escala de bienestar '1', en esta escala las pacientes no tienen síntomas y pueden realizar todas sus actividades. Por otro lado, las pacientes pertenecientes a la escala '2' no pueden realizar todas las actividades y presentan síntomas.
 
-## Tabla Kaplan-Meier}
+## Tabla Kaplan-Meier
 
 ```{r}
 fit_cancer_ovario<-survfit(Surv(ovarian$futime,ovarian$fustat)~1,type="kaplan-meier",
@@ -251,7 +253,7 @@ survdiff(Surv(cancer_ovario$futime, cancer_ovario$fustat)~cancer_ovario$rx,rho=1
 
 Ambas pruebas estadísticas son consistentes ya que se acepta con un nivel de significacia del $5\%$ i.e.  $p-value > 0.05$ por lo que podemos decir que, no hay pruebas estadísticas suficientes para afirmar que hay una diferencia en la supervivecia respecto a los tratamientos
 
-+3. Ajuste un modelo de riesgos proporcionales de Cox para definir la contribución de las variables al tiempo de supervivencia de las pacientes.
++ 3. Ajuste un modelo de riesgos proporcionales de Cox para definir la contribución de las variables al tiempo de supervivencia de las pacientes.
 $$p-value<\alpha \iff \text{rechazar }H_{0}$$
 ```{r}
 #Primero observamos la significancia por cada covariable:
