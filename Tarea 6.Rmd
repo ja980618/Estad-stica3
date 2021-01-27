@@ -1,0 +1,354 @@
+---
+title: "Tarea 6. "
+subtitle: "Modelos de Supervivencia y de Series de Tiempo"
+author: 
+  - Ávila Argüello Carlos - 06
+  - Bonilla Cruz José Armando - 10
+  - Luna Gutiérrez Yanely - 51
+  - Reyes González Belén - 64
+  - Rivera Mata Dante Tristán - 67
+output:
+    pdf_document:
+        latex_engine: xelatex
+header includes:
+  - \usepackage[T1]{fontenc}
+  - \usepackage[utf8]{inputenc}
+  - \usepackage{amsmath}
+  - \usepackage{amssymb}
+  - \usepackage{amsthm}
+  - \usepackage{amsfonts}
+  - \usepackage{multirow}
+  - \usepackage{booktabs}
+  - \usepackage{graphicx}
+  - \usepackage{xcolor}
+  - \usepackage{listings} 
+  - \usepackage{setspace}
+  - \setlength{\parindent}{0in}
+  - \usepackage{float}
+  - \usepackage{fancyhdr}
+  - \pagestyle{fancy} 
+  - \fancyhf{}
+  - \usepackage{xspace}
+---
+
+Utiliza la base de datos de R llamada ovarian y realiza lo siguiente:
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(foreign)
+library(splines)
+library(survival)
+library(nlme)
+
+library(muhaz)
+library(survminer)
+library(TH.data)
+library(KMsurv)
+library(LifeTables)
+library(mclust)
+```
+
++ 1. Realice un análisis descriptivo sobre el tiempo de supervivencia de los sujetos, adeḿas de sus características generales y particulares. Obtenga la tabla de la estimación de Kaplan-Meier y grafique. En particular, grafique la función de supervivencia.
+
+```{r}
+attach(ovarian)
+summary(ovarian)
+```
+La base de datos 'ovarian' nos dice el tiempo de supervivencia de una población que sufre cáncer de ovario. La descripción de la las componentes de la tabla es la que sigue:
+
+La edad de los individuos se da en años. Columna: 'age'.
+
+Si existieron secuelas a causa de la enfermedad se representa con uno (no) o dos (sí), esto se representa en la columna 'resid.ds'.
+ECOG da la escala de mejoría (donde '1' representa el mejor estado).
+´rx´ dice el tipo de tratamiento usado.
+En la columna 'fustat' se dice si hubo falla o censura (1 ó 0 respectivamente).
+El tiempo se cuenta en días.
+
+
+```{r out.width = "75%", fig.align='center', echo=FALSE}
+cancer_ovario <- ovarian
+
+ggplot(cancer_ovario, aes(x = age, fill = ..x..))+
+  geom_histogram( aes(y = ..density..) ,bins = 10,color = 'white', alpha = 0.8)+
+  scale_fill_gradient(low='#deebf7', high='#2171b5')+
+  geom_density(color = '#deebf7', size = 0.7, fill = '#9ecae1', alpha = 0.2)+
+  geom_vline(aes(xintercept = mean(cancer_ovario$age)), linetype = 'dashed', color = '#2171b5', size = 0.8)+
+  scale_y_continuous(labels = scales::percent)+
+  scale_x_continuous(labels = scales::comma)+
+  labs(y = 'Frecuencia', x = 'Edad', subtitle = 'Información sobre el cáncer de ovario', title = 'Histograma de Edad') + theme_minimal() +
+  theme(plot.title = element_text(size= 12, hjust = 0.5),
+        axis.title.x = element_text(size = 10, color = 'grey20'),
+        axis.title.y = element_text(size = 10, color = 'grey20'),
+        legend.position="none")
+```
+
+Notemos que el promedio de la edad es de 56 años aproximadamente, tiene tres modas y colas pesadas. La mayoría de la población oscila entre los 50 y 65 años de edad.
+
+```{r out.width = "75%", fig.align='center', echo=FALSE}
+ggplot(cancer_ovario, aes(x = futime, fill = ..x..))+
+  geom_histogram( aes(y = ..density..) ,bins = 7,color = 'white', alpha = 0.8)+
+  scale_fill_gradient(low='greenyellow', high='orange')+
+  geom_density(color = '#deebf7', size = 0.7, fill = 'orange', alpha = 0.2)+
+  geom_vline(aes(xintercept = mean(cancer_ovario$futime)), linetype = 'dashed', color = 'red', size = 0.8)+
+  scale_y_continuous(labels = scales::percent)+
+  scale_x_continuous(labels = scales::comma)+
+  labs(y = 'Frecuencia', x = 'Tiempo', subtitle = 'Información sobre el cáncer de ovario', title = 'Histograma de Tiempo') + theme_minimal() +
+  theme(plot.title = element_text(size = 12, hjust = 0.5),
+        axis.title.x = element_text(size = 10, color = 'grey20'),
+        axis.title.y = element_text(size = 10, color = 'grey20'),
+        legend.position="none")
+```
+
+Hay un sesgo positivo dados los datos atípicos (que en su mayoría toman valores mayores al promedio) para las tiempos de supervivencia. Además parece que se presentan dos modas.
+
+```{r out.width = "75%",fig.align='center', echo=FALSE}
+ggplot(cancer_ovario, aes(x = fustat, fill = ..x..))+
+  geom_bar(color = 'white', alpha = 0.8)+
+  scale_fill_gradient(low='greenyellow', high='limegreen')+
+  labs(y = 'Frecuencia', x = 'Censuras y Fallas', subtitle = 'Información sobre el cáncer de ovario', title = 'Status') + theme_minimal() +
+theme(plot.title = element_text(size = 12, hjust = 0.5),
+      axis.title.x = element_text(size = 10, color = 'grey20'),
+      axis.title.y = element_text(size = 10, color = 'grey20'),
+      legend.position="none")
+```
+
+Notemos que hay mayor presencia de censuras que se pueden atribuir a los costos del tratamiento o del estudio, lo cual implica que la estimación sobre el tiempo de supervivencia puede verse afectada considerablemente.
+
+```{r out.width = "75%", fig.align='center', echo=FALSE}
+ggplot(cancer_ovario, aes(x = resid.ds, fill = ..x..))+
+  geom_bar(color = 'white', alpha = 0.8)+
+  scale_fill_gradient(low='lightblue', high='dodgerblue3')+
+  labs(y = 'Frecuencia', x = 'No o Sí', subtitle = 'Información sobre el cáncer de ovario', title = 'Secuelas') + theme_minimal() +
+theme(plot.title = element_text(size = 12, hjust = 0.5),
+      axis.title.x = element_text(size = 10, color = 'grey20'),
+      axis.title.y = element_text(size = 10, color = 'grey20'),
+      legend.position="none")
+```
+
+Notemos que la mayoría de las personas en el estudio presentaron secuelas relacionadas con el tratamiento, esto puede dar pauta a estudios futuros y el análisis del tratamiento. Por la perspetiva estadística, la función de supervivencia puede verse afectada.
+
+```{r out.width = "70%", fig.align='center', echo=FALSE}
+ggplot(cancer_ovario, aes(x = rx, fill = ..x..))+
+  geom_bar(color = 'white', alpha = 0.8)+
+  scale_fill_gradient(low='lightblue', high='dodgerblue3')+
+  labs(y = 'Frecuencia', subtitle = 'Información sobre el cáncer de ovario', title = 'Tipo de tratamiento') + theme_minimal() +
+theme(plot.title = element_text(size = 12, hjust = 0.5),
+      axis.title.x = element_text(size = 10, color = 'grey20'),
+      axis.title.y = element_text(size = 10, color = 'grey20'),
+      legend.position="none")
+```
+
+Del gráfico anterior notemos que la muestra estudiada considera que el número de pacientes del tratamiento 1 y 2 es el mismo para cada uno.
+
+```{r out.width = "70%", echo=FALSE, fig.align='center'}
+ggplot(cancer_ovario, aes(x = ecog.ps, fill = ..x..))+
+  geom_bar(color = 'white', alpha = 0.8)+
+  scale_fill_gradient(low='lightblue', high='dodgerblue3')+
+  labs(y = 'Frecuencia', subtitle = 'Información sobre el cáncer de ovario', title = 'Calidad de vida del paciente') + theme_minimal() +
+theme(plot.title = element_text(size = 12, hjust = 0.5),
+      axis.title.x = element_text(size = 10, color = 'grey20'),
+      axis.title.y = element_text(size = 10, color = 'grey20'),
+      legend.position="none")
+```
+
+La mayoría de los pacienten tienen una escala de bienestar '1', en esta escala las pacientes no tienen síntomas y pueden realizar todas sus actividades. Por otro lado, las pacientes pertenecientes a la escala '2' no pueden realizar todas las actividades y presentan síntomas.
+
+## Tabla Kaplan-Meier}
+
+```{r}
+fit_cancer_ovario<-survfit(Surv(ovarian$futime,ovarian$fustat)~1,type="kaplan-meier",
+                conf.type='plain')
+summary(fit_cancer_ovario)
+```
+```{r out.width = "65%", fig.align='center', echo=FALSE}
+ggsurvplot(fit_cancer_ovario, data = ovarian, palette = c('#390E7F'))
+```
+
+La supervivencia tiene un decremento de tipo lineal hasta antes del día 600 del estudio y posteriormente tenemos una constante dado que la población remanente presenta censuras lo cual a su vez implica que la función de supervivencia estimada no toma el valor de cero.
+
++ 2. Identifique las variables que afectan el tiempo de supervivencia, de manera exploratoria (estadísticas descriptivas y/o gráficas) y formal (usando intervalos de confianza y pruebas
+de hipótesis). En particular, pruebe si el tiempo de supervivencia es el mismo para ambos tratamientos. Use alguna prueba de hipótesis, con un nivel de confianza del 95%.
+
+SECUELAS
+
+```{r out.width = "65%", fig.align='center', echo=FALSE}
+cancer_ovario$resid.ds<-factor(cancer_ovario$resid.ds,levels=c('1','2'))
+fit_residuals<-survfit(Surv(cancer_ovario$futime, cancer_ovario$fustat)~cancer_ovario$resid.ds,
+                   type='kaplan-meier',conf.type='plain')
+ggsurvplot(fit_residuals, data = cancer_ovario, palette = c('#390E7F',"blue"),conf.int = T)
+```
+
+De las gráficas de supervivencia podemos notar que las personas que presesentan secuelas (res.ds=2) tienen probabilidades mayores de presentar alguna falla. De los intervalos de confianza podemos observar que en los primeros días sí hay una diferencia significativa. Pero comprobemoslo con pruebas de hipótesis.
+
+Procederemos con la prueba de long-rank
+
+```{r}
+#H0:son iguales vs H1: son dsitintas
+survdiff(Surv(cancer_ovario$futime, cancer_ovario$fustat)~cancer_ovario$resid.ds,rho=0)
+
+```
+
+Ahora con la prueba de peto-peto
+
+```{r}
+#H0:son iguales vs H1: son dsitintas
+survdiff(Surv(cancer_ovario$futime, cancer_ovario$fustat)~cancer_ovario$resid.ds,rho=1)
+```
+
+Al utilizar las dos pruebas estadísticas podemos notar que  no son consistentes, ya que una rechaza con un nivel de significacia del $5\%$ y la otra lo acepta. Pero nos quedaremos con la prueba de peto-peto ya que gráficamente sí podiamos observar una diferencia significativa y esta prueba nos dice que $p-value < 0.05$  por lo que hay pruebas estadístias para rechazar H0 y aceptamos que la supervivencia  es distitanta dado que sí hay secuelas o no.  
+
+TRATAMIENTO
+
+```{r out.width = "70%", fig.align='center', echo=FALSE}
+cancer_ovario$rx<-factor(cancer_ovario$rx,levels=c('1','2'))
+fit_treatmen<-survfit(Surv(cancer_ovario$futime, cancer_ovario$fustat)~cancer_ovario$rx,
+                   type='kaplan-meier',conf.type='plain')
+ggsurvplot(fit_treatmen, data = cancer_ovario, palette = c('#92E11A',"yellow"),conf.int = T)
+```
+
+De las gráficas de supervivencia podemos suponer que las personas con distintos tratamientos tienen la misma supervivencia, pero procederemos a hacer pruebas formales
+
+Procederemos con la prueba de long-rank
+
+```{r}
+#H0:son iguales vs H1: son dsitintas
+survdiff(Surv(cancer_ovario$futime, cancer_ovario$fustat)~cancer_ovario$rx,rho=0)
+
+```
+
+Ahora con la prueba de peto-peto
+
+```{r}
+#H0:son iguales vs H1: son dsitintas
+survdiff(Surv(cancer_ovario$futime, cancer_ovario$fustat)~cancer_ovario$rx,rho=1)
+```
+
+Ambas pruebas estadísticas son consistentes ya que se acepta con un nivel de significacia del $5\%$ i.e.  $p-value > 0.05$ por lo que podemos decir que, no hay pruebas estadísticas suficientes para afirmar que hay una diferencia en la supervivecia respecto a los tratamientos
+
+ECOG
+
+```{r out.width = "70%", fig.align='center', echo=FALSE}
+cancer_ovario$ecog.ps<-factor(cancer_ovario$ecog.ps,levels=c('1','2'))
+fit_ecog <- survfit(Surv(cancer_ovario$futime, cancer_ovario$fustat)~cancer_ovario$ecog.ps,
+                   type='kaplan-meier',conf.type='plain')
+ggsurvplot(fit_ecog, data = cancer_ovario, palette = c('#FD9A92',"#FA7C13"),conf.int = T)
+```
+
+De las gráficas de supervivencia podemos suponer que las personas con distintos tratamientos tienen la misma supervivencia, pero procederemos a hacer pruebas formales
+
+Procederemos con la prueba de long-rank
+
+```{r}
+#H0:son iguales vs H1: son dsitintas
+survdiff(Surv(cancer_ovario$futime, cancer_ovario$fustat)~cancer_ovario$rx,rho=0)
+```
+
+Ahora con la prueba depeto-peto
+
+```{r}
+#H0:son iguales vs H1: son dsitintas
+survdiff(Surv(cancer_ovario$futime, cancer_ovario$fustat)~cancer_ovario$rx,rho=1)
+```
+
+Ambas pruebas estadísticas son consistentes ya que se acepta con un nivel de significacia del $5\%$ i.e.  $p-value > 0.05$ por lo que podemos decir que, no hay pruebas estadísticas suficientes para afirmar que hay una diferencia en la supervivecia respecto a los tratamientos
+
++3. Ajuste un modelo de riesgos proporcionales de Cox para definir la contribución de las variables al tiempo de supervivencia de las pacientes.
+$$p-value<\alpha \iff \text{rechazar }H_{0}$$
+```{r}
+#Primero observamos la significancia por cada covariable:
+coxph(Surv(cancer_ovario$futime,cancer_ovario$fustat)~cancer_ovario$age)
+#Como p-value es menor que alpha, entonces rechazamos la hipótesis nula que dice que "el coeficiente asociado al factor edad es cero (lo cual implicaría que no es segnificativo dicho facotr para el modelo de riesgos proporcionales)" por lo que la edad sí es una covariable significativa para el modelo al nivel de significancia del 20%. 
+coxph(Surv(cancer_ovario$futime,cancer_ovario$fustat)~cancer_ovario$resid.ds)
+#Sí es significativa la covariable "secuelas".
+
+coxph(Surv(cancer_ovario$futime,cancer_ovario$fustat)~cancer_ovario$rx)
+#No es significativa la covariable "tipo de tratamiento".
+coxph(Surv(cancer_ovario$futime,cancer_ovario$fustat)~cancer_ovario$ecog.ps)
+#No es significativa la covariable "calidad del paciente".
+```
+
+Por tanto podemos elegir el modelo de riesgios proporcionale que se compone de las covariables "edad" y "secuelas". Descartamos las que no son significativas dado que la información que pueden proporcionar al modelo en érminos del riesgo es mínima en relación a el conjunto de las cuatro covariables.
+
+```{r}
+riesgos_proporcionales<-coxph(Surv(cancer_ovario$futime,cancer_ovario$fustat)~ cancer_ovario$age + cancer_ovario$resid.ds)
+```
+
+• ¿Cuál es la estimación puntual para los coeficientes de regresión? Interprete los coeficientes de regresión.
+
+```{r}
+riesgos_proporcionales$coefficients
+exp(riesgos_proporcionales$coefficients)
+```
+
+Si observamos el riesgo en un tiempo específico (dada $t_0\geq 0$) para una persona de edad x, al aumentar la edad en un año (x+1), la función de riesgo (que corresponde al timepo de falla, muerte por cáncer de ovario) aumenta $15\%$ con respecto a la persona de edad x.
+Análogamente si se presentan secuelas en una individuo (en un tiempo fijo) aumenta la función de riesgo en un $84\%$ con respecto a la persona que no presenta secuelas.
+
+Lo anterior implica que, a grosso modo, a mayor edad se tiene mayor riesgo de falla y por ende menor tiempo de supervivencia. Y si se presentan secuelas (por la enfermedad) aumenta el riesgo de muerte por cáncer de ovario, lo que quiere decir que el tiempo de supervivencia para las pacientes que sufren secuelas disminuye.
+
+• ¿Las variables explicativas tienen o no efecto en el modelo? Justifique.
+
+```{r out.width = "70%", fig.align='center', echo=FALSE}
+riesgos_proporcionales
+rp_mtg <- residuals(riesgos_proporcionales,type='martingale')
+plot(cancer_ovario$age, rp_mtg, xlab = "Edad", ylab = "Residuos Martingala", main = "Modelo de dos variables", pch = 10, col = "darkblue")
+lines(smooth.spline(rp_mtg~cancer_ovario$age), col = "purple", lwd = 2)
+lines(cancer_ovario$age, fitted(lm(rp_mtg ~ cancer_ovario$age)), col="pink", lwd = 1.5)
+
+rp_con_todas <- coxph(Surv(cancer_ovario$futime,cancer_ovario$fustat)~ cancer_ovario$age + cancer_ovario$resid.ds + cancer_ovario$rx + cancer_ovario$ecog.ps)
+rp_con_todas
+rp_con_tod_mtg <- residuals(rp_con_todas,type='martingale')
+plot(cancer_ovario$age, rp_con_tod_mtg, xlab = "Edad", ylab = "Residuos Martingala", main = "Modelo con todas las variables", pch = 10, col = "darkblue")
+lines(smooth.spline(rp_con_tod_mtg~cancer_ovario$age), col = "purple", lwd = 2)
+lines(cancer_ovario$age, fitted(lm(rp_con_tod_mtg ~ cancer_ovario$age)), col="pink", lwd = 1.5)
+```
+
+Con el modelo de riesgos proporcionales usando dos variables (las que nosotros propusimos) podemos notar que la covariable que tiene una mayor significancia es la edad, lo cual sucede también en el modelo que consifera todas las variables de la base de datos original.
+
+Por otro lado, podemos notar en las gráficas anteriores (de los residuos martinagalas) que para el modelo de dos covariables, los resiguos aproximan mejor a cero que en el modelo donde se consideran todas las covariables, lo cual implica que para la covariable edad se cumple mejor el supuesto de linealidad cuando solo hay dos covariables que cuando se consideran todas.
+
+Por lo tanto las variables explicativas en el modelo que nosotros propusimos sí tienen efecto en el modelo.
+
+• Obtenga un intervalo de confianza al 95% para la estimación de los coeficientes de regresión.
+
+```{r}
+confint(riesgos_proporcionales)
+```
+Notemos que la variable *secuelas* no es significativa ya que el cero pertenece al intervalo de confianza obtenido, mientras que para la *edad* sí hay significancia del parámetro. 
+
+• ¿Es válido tu modelo de acuerdo al supuesto de riesgos proporcionales? Realizas las pruebas y concluye.
+
+Para contestar esta pregunta, consideremos lo siguiente:
+
+```{r out.width = "70%", echo=FALSE, fig.align='center'}
+aux_rcox <- survfit(coxph(Surv((cancer_ovario$fustat-rp_mtg),cancer_ovario$fustat)~1), type ='kaplan-meier')
+plot(aux_rcox$time, -log(aux_rcox$surv), type ='s', xlab = 'Residuos de Cox-Snell', ylab = 'Residuos acumulados', main = 'Bondad de ajuste (riesgos proporcionales)', col ='#1151BA')
+abline(0,1, col = '#619906', lwd =2)
+```
+Buscamos que la gráfica escalonada se asemeja lo más posible a la identidad, y como se puede observar al inicio de la gráfica la estimación se pega a la identidad en os primeros puntos, lo qe nos habla de un buen ajuste, sin embargo, como tenemos pocos datos, podemos observar que los residuos se alejan de forma considerable en las últimas observaciones.
+
+```{r out.width = "90%", echo=FALSE, fig.align='center'}
+par(mfrow=c(2,2), cex= 0.6)
+
+#Comparando la variable edad
+plot(cox.zph(riesgos_proporcionales), var = "cancer_ovario$age", main = "Considerando las variables significativas", col = c("orange","green","green"), lwd = 1.8, ylab = "")
+abline(h = 0, col = "red", lwd = 1.8)
+
+plot(cox.zph(rp_con_todas), var = "cancer_ovario$age" ,main = "Considerando todas las variables", col = c("orange","green","green"), lwd = 1.8, ylab = "")
+abline(h = 0, col = "red", lwd = 1.8)
+
+
+#Comparando la variable secuelas 
+plot(cox.zph(riesgos_proporcionales), var = "cancer_ovario$resid.ds", main = "Considerando las variables significativas", col = c("purple","violet","violet"), lwd = 1.8, ylab = "")
+abline(h = 0, col = "blue", lwd = 1.8)
+
+plot(cox.zph(rp_con_todas), var = "cancer_ovario$resid.ds" ,main = "Considerando todas las variables", col = c("purple","violet","violet"), lwd = 1.8, ylab = "")
+abline(h = 0, col = "blue", lwd = 1.8)
+
+```
+Se observa que las variables significativas se "pegan"a las líneas horizontales, cumpliendo así con el supuesto de linealidad. Por otro lado, los puntos se dispersan de manera aleatoria lo que nos da a entender que se está cumpliendo el supuesto de riesgos proporcionales. 
+
+Para detectar datos atípicos necesitamos realizar los plots de los residuos de la devianza y de los residuos de dfbetas, sin embargo tenemos muy pocos datos, por lo que remover los datos atípicos podría afectar de forma significativa las estimaciones y el tamaño de la muestra.
+
+Por las graficas anteriores podemos concluir que, a pesar de tener pocos datos, considerar las covariables *edad* y *secuelas* da un ajuste que cumple los supuestos de linealidad y de riesgos proporcionales. 
+
+
+
