@@ -18,23 +18,23 @@ library(survminer)
 
 #                                                                 Base de datos
 #Hacemos la base de datos manejable
-    data("pbc")
-    ? pbc
-    pbc <- pbc
-    str(pbc)
-    fc <- c(3, 6, 7, 8, 9, 10, 20)
-    for (i in fc) {
-      pbc[, i] <- as.factor(pbc[, i])
-    }
-    str(pbc)
-    summary(pbc)
+data("pbc")
+? pbc
+pbc <- pbc
+str(pbc)
+fc <- c(3, 6, 7, 8, 9, 10, 20)
+for (i in fc) {
+  pbc[, i] <- as.factor(pbc[, i])
+}
+str(pbc)
+summary(pbc)
 #Imputación de datos faltantes con randomForest
-    pbc$trt[is.na(pbc$trt)] <- 3
-    pbc_sna <- rfImpute(time ~ ., pbc)
-    pbc_sna$trt <- as.factor(pbc_sna$trt)
-    str(pbc_sna)
-    summary(pbc_sna)
-    attach(pbc_sna)
+pbc$trt[is.na(pbc$trt)] <- 3
+pbc_sna <- rfImpute(time ~ ., pbc)
+pbc_sna$trt <- as.factor(pbc_sna$trt)
+str(pbc_sna)
+summary(pbc_sna)
+attach(pbc_sna)
 #                                                       Análisis descriptivo  ----
 #Dado que tenemos muchas variables, las dividimos en dos principales grupos
 #numéricas y categóricas.
@@ -104,22 +104,48 @@ grid.arrange(g1, g2, g3, g4, g5, g6, g7, g8, ncol = 4)
 
 # Variables numéricas   ----
 #Dado que tenemos muchas variables numéricas y es iterativa la forma de hacer las gráficas
-#hemos decidido automatixar el procesos de graficado para que no se extienda demasiado el 
+#hemos decidido automatixar el procesos de graficado para que no se extienda demasiado el
 #código:
 
-variables_num <- c(5,11,12,13,14,15,16,17,18,19)
+variables_num <- c(5, 11, 12, 13, 14, 15, 16, 17, 18, 19)
 nombres <- colnames(pbc_sna)[variables_num]
-low_color <- c('#deebf7','#deebf7','#98a222','#ffa36f', '#ffa36f', '#75287a',
-               '#d08fa6', '#45e900', '#be4a2f','#58599b','#202143')
-high_color <- c('#2171b5','#2171b5','#70771f','#d65500','#d65500','#2a152a',
-                '#950d55','#234915','#622415','#202143')
+low_color <-
+  c(
+    '#deebf7',
+    '#deebf7',
+    '#98a222',
+    '#ffa36f',
+    '#ffa36f',
+    '#75287a',
+    '#d08fa6',
+    '#45e900',
+    '#be4a2f',
+    '#58599b',
+    '#202143'
+  )
+high_color <-
+  c(
+    '#2171b5',
+    '#2171b5',
+    '#70771f',
+    '#d65500',
+    '#d65500',
+    '#2a152a',
+    '#950d55',
+    '#234915',
+    '#622415',
+    '#202143'
+  )
 h_c <- list(10)
 for (i in 1:10) {
-  h_c[[i]]<- ggplot(pbc, aes(x = pbc_sna[,variables_num[i]], fill = ..x..)) +
-    geom_histogram(aes(y = ..density..) ,
-                   bins = 10,
-                   color = 'white',
-                   alpha = 0.8) +
+  h_c[[i]] <-
+    ggplot(pbc, aes(x = pbc_sna[, variables_num[i]], fill = ..x..)) +
+    geom_histogram(
+      aes(y = ..density..) ,
+      bins = 10,
+      color = 'white',
+      alpha = 0.8
+    ) +
     scale_fill_gradient(low = low_color[i], high = high_color[i]) +
     geom_density(
       color = '#deebf7',
@@ -128,144 +154,503 @@ for (i in 1:10) {
       alpha = 0.2
     ) +
     geom_vline(
-      aes(xintercept = mean(pbc_sna[,variables_num[i]])),
+      aes(xintercept = mean(pbc_sna[, variables_num[i]])),
       linetype = 'dashed',
       color = '#2171b5',
       size = 0.8
     ) +
     scale_y_continuous(labels = scales::percent) +
     scale_x_continuous(labels = scales::comma) +
-    labs(
-      y = 'Frecuencia',
-      x = nombres[i],
-      title = nombres[i]
-    ) + theme_minimal() +
+    labs(y = 'Frecuencia',
+         x = nombres[i],
+         title = nombres[i]) + theme_minimal() +
     theme(
       plot.title = element_text(size = 12, hjust = 0.5),
       axis.title.x = element_text(size = 10, color = 'grey20'),
       axis.title.y = element_text(size = 10, color = 'grey20'),
       legend.position = "none"
-    )  
+    )
 }
-grid.arrange(h_c[[1]],h_c[[2]],h_c[[3]],h_c[[4]],h_c[[5]],h_c[[6]],ncol=3)
-grid.arrange(h_c[[7]],h_c[[8]],h_c[[9]],h_c[[10]],ncol=2)
+grid.arrange(h_c[[1]], h_c[[2]], h_c[[3]], h_c[[4]], h_c[[5]], h_c[[6]], ncol =
+               3)
+grid.arrange(h_c[[7]], h_c[[8]], h_c[[9]], h_c[[10]], ncol = 2)
 
 # Comentario            ----
 #Dado que, además de tener falla y censura en el estudio, se considera el transplante
-#de hígado, vamos a agruparlo como censura. La razón es que cuando un paciente que 
-#vive con la enfermedad recibe un hígado, el estudio para conocer la efectividad del 
+#de hígado, vamos a agruparlo como censura. La razón es que cuando un paciente que
+#vive con la enfermedad recibe un hígado, el estudio para conocer la efectividad del
 #medicamento se ve afectado. No se agrupa como falla porque el paciente no muere.
-status1 <- gsub(pattern = 2, replacement = 1,  gsub(pattern = 1, replacement = 0, pbc_sna$status))
+status1 <-
+  gsub(
+    pattern = 2,
+    replacement = 1,
+    gsub(pattern = 1, replacement = 0, pbc_sna$status)
+  )
 table(status1)
 status1 <- as.numeric(status1)
 
 #                                                       Análisis Estadístico  ----
 # 1. Obtenga el estimador K-M
-fit_pbc <-survfit(Surv(pbc_sna$time ,as.numeric(status1))~1,type="kaplan-meier",conf.type='plain')
-ggsurvplot(fit_pbc, data = pbc_sna, palette = c('#390E7F','#390E7F'),conf.int = T,censor = F)
+fit_pbc <-
+  survfit(Surv(pbc_sna$time , as.numeric(status1)) ~ 1,
+          type = "kaplan-meier",
+          conf.type = 'plain')
+ggsurvplot(
+  fit_pbc,
+  data = pbc_sna,
+  palette = c('#390E7F', '#390E7F'),
+  conf.int = T,
+  censor = F
+)
 
 # 2. Ver la significancia de las covariables
 
 # Variables numéricas   ----
 
-  # age: edad en años del paciente.
+# age: edad en años del paciente.
+#Dado que tenemos diversas edades (49 diferentes en años) no es posible visualizar
+#la función de supervivencia para cada una de tal forma que determinemos si existe o no
+#diferencia por edad, por lo que agruparemos con el criterio siguiente:
+#para los grupos se considerará el rango que va de la media de la edad menos la desviación
+#estándar hasta la media de la edad más la desviación estándar y los otros dos grupos
+#se considerarán el complemento de este.
+#El grupo mayoritario será:-sqrt(var(pbc_sna$age)) + mean(pbc_sna$age) #de los 40
+sqrt(var(pbc_sna$age)) + mean(pbc_sna$age)  #a los 60
+grupos_age <-
+  factor(
+    ifelse(
+      pbc_sna$age < 40,
+      "age26-39",
+      ifelse(age <= 60, "age40-60", "age>60")
+    ),
+    levels = c("age26-39", "age40-60", "age>60")
+  )
 
-  # albumin: albúmina de suero (g/dl).
+fit_age <-
+  survfit(Surv(pbc_sna$time, status1) ~ grupos_age,
+          type = "kaplan-meier",
+          conf.type = "plain")
+#Gráfico
+g_age <-
+  ggsurvplot(
+    fit_age,
+    data = pbc_sna,
+    palette = c('#D55757', "#D59457", "#E1C318"),
+    conf.int = T,
+    censor = F
+  )
+#Estadístico : H0:son iguales las funciones de supervivencia por subcategoría vs H1: son dsitintas
+survdiff(Surv(pbc_sna$time, status1) ~ grupos_age, rho = 0)
+survdiff(Surv(pbc_sna$time, status1) ~ grupos_age, rho = 1)
 
-  # alk.phos: fosfotasa alcalina (U/liter).
-  
-  # ast: aspartate aminotransferase, once called SGOT (U/ml).
-  
-  # bili: serum bilirunbin (mg/dl).
-  
-  # chol: serum cholesterol (mg/dl).
-  
-  # copper: cobre en la orina (ug/day).
-  
-  # platelet: cuenta de plaquetas.
-  
-  # protime: (standardised blood clotting time ) tiempo estandarizado de coagulación de la sangre.
-  
-  # trig: triglicéridos (mg/dl).
+
+# albumin: albúmina de suero (g/dl).
+#Análogo a la explicación anterior vamos a proceder-sqrt(var(pbc_sna$albumin)) +
+mean(pbc_sna$albumin) #de 3
+sqrt(var(pbc_sna$albumin)) + mean(pbc_sna$albumin)  #a  4
+grupos_albumin <-
+  factor(ifelse(
+    pbc_sna$albumin < 3,
+    "albumin0-2.99",
+    ifelse(pbc_sna$albumin <= 4, "albumin3-4", "albumin>4")
+  ))
+
+fit_albumin <-
+  survfit(Surv(pbc_sna$time, status1) ~ grupos_albumin,
+          type = "kaplan-meier",
+          conf.type = "plain")
+#Gráfico
+g_albumin <-
+  ggsurvplot(
+    fit_albumin,
+    data = pbc_sna,
+    palette = c('#9c528b', "#2f0147", "#610f7f"),
+    conf.int = T,
+    censor = F
+  )
+#Estadístico : H0:son iguales las funciones de supervivencia por subcategoría vs H1: son dsitintas
+survdiff(Surv(pbc_sna$time, status1) ~ grupos_albumin, rho = 0)
+survdiff(Surv(pbc_sna$time, status1) ~ grupos_albumin, rho = 1)
+
+
+# alk.phos: fosfotasa alcalina (U/liter).
+#Notemos que en este caso, los datos que tenemos generan una desviación estándar
+#muy alta por lo cual es conveniente hacer otro criterio para seccionar esta variable
+
+grupos_alk.phos <-
+  factor(ifelse(pbc_sna$alk.phos < 3000, "alk.phos289-3000", "alk.phos>3000"))
+
+fit_alk.phos <-
+  survfit(
+    Surv(pbc_sna$time, status1) ~ grupos_alk.phos,
+    type = "kaplan-meier",
+    conf.type = "plain"
+  )
+#Gráfico
+g_alk.phos <-
+  ggsurvplot(
+    fit_alk.phos,
+    data = pbc_sna,
+    palette = c('#FE8423', "#FEB923"),
+    conf.int = T,
+    censor = F
+  )
+#Estadístico : H0:son iguales las funciones de supervivencia por subcategoría vs H1: son dsitintas
+survdiff(Surv(pbc_sna$time, status1) ~ grupos_alk.phos, rho = 0)
+survdiff(Surv(pbc_sna$time, status1) ~ grupos_alk.phos, rho = 1)
+
+
+# ast: aspartato aminotransferase, once called SGOT (U/ml).
+#Análogo a la explicación anterior vamos a proceder-sqrt(var(pbc_sna$ast)) +
+mean(pbc_sna$ast) #de 73
+sqrt(var(pbc_sna$ast)) + mean(pbc_sna$ast)  #a  174
+
+grupos_ast <-
+  factor(ifelse(
+    pbc_sna$ast < 73,
+    "ast26-72.99",
+    ifelse(pbc_sna$ast <= 174, "ast73-174", "ast>174")
+  ))
+
+fit_ast <-
+  survfit(Surv(pbc_sna$time, status1) ~ grupos_ast,
+          type = "kaplan-meier",
+          conf.type = "plain")
+#Gráfico
+g_ast <-
+  ggsurvplot(
+    fit_ast,
+    data = pbc_sna,
+    palette = c('#51B85F', "#4798A3", "#47A387"),
+    conf.int = T,
+    censor = F
+  )
+#Estadístico : H0:son iguales las funciones de supervivencia por subcategoría vs H1: son dsitintas
+survdiff(Surv(pbc_sna$time, status1) ~ grupos_ast, rho = 0)
+survdiff(Surv(pbc_sna$time, status1) ~ grupos_ast, rho = 1)
+
+
+# bili: serum bilirunbin (mg/dl).
+#Los criterios anteriores se vieron rebasados por el conocimiento de la medicina que nos dice que
+#la partición conveniente es de 0 a 2, de 2 a 3 y mayor a 3.
+
+grupos_bili <-
+  factor(ifelse(
+    pbc_sna$bili < 2,
+    "bili.3-1.99",
+    ifelse(pbc_sna$bili <= 3, "bili2-3", "bili>3")
+  ))
+
+fit_bili <-
+  survfit(Surv(pbc_sna$time, status1) ~ grupos_bili,
+          type = "kaplan-meier",
+          conf.type = "plain")
+#Gráfico
+g_bili <-
+  ggsurvplot(
+    fit_bili,
+    data = pbc_sna,
+    palette = c('#729F2E', "#2E9F69", "#409F2E"),
+    conf.int = T,
+    censor = F
+  )
+#Estadístico : H0:son iguales las funciones de supervivencia por subcategoría vs H1: son dsitintas
+survdiff(Surv(pbc_sna$time, status1) ~ grupos_bili, rho = 0)
+survdiff(Surv(pbc_sna$time, status1) ~ grupos_bili, rho = 1)
+
+
+# chol: serum cholesterol (mg/dl).
+quantile(pbc_sna$chol)
+grupos_chol <-
+  factor(ifelse(pbc_sna$chol < 200, "chol 0-199.99", "chol>200"))
+
+fit_chol <-
+  survfit(Surv(pbc_sna$time, status1) ~ grupos_chol,
+          type = "kaplan-meier",
+          conf.type = "plain")
+#Gráfico
+g_chol <-
+  ggsurvplot(
+    fit_chol,
+    data = pbc_sna,
+    palette = c('#40916c', "#52b788"),
+    conf.int = T,
+    censor = F
+  )
+#Estadístico : H0:son iguales las funciones de supervivencia por subcategoría vs H1: son dsitintas
+survdiff(Surv(pbc_sna$time, status1) ~ grupos_chol, rho = 0)
+survdiff(Surv(pbc_sna$time, status1) ~ grupos_chol, rho = 1)
+
+
+# copper: cobre en la orina (ug/day).
+#Análogo a la explicación anterior vamos a proceder
+quantile(pbc_sna$copper)
+
+grupos_copper <-
+  factor(ifelse(
+    pbc_sna$copper < 70,
+    "copper4-69.99",
+    ifelse(pbc_sna$copper <= 140, "copper70-140", "copper>140")
+  ))
+
+fit_copper <-
+  survfit(Surv(pbc_sna$time, status1) ~ grupos_copper,
+          type = "kaplan-meier",
+          conf.type = "plain")
+#Gráfico
+g_copper <-
+  ggsurvplot(
+    fit_copper,
+    data = pbc_sna,
+    palette = c('#DB73E3', "#6E3971", "#A456AA"),
+    conf.int = T,
+    censor = F
+  )
+#Estadístico : H0:son iguales las funciones de supervivencia por subcategoría vs H1: son dsitintas
+survdiff(Surv(pbc_sna$time, status1) ~ grupos_copper, rho = 0)
+survdiff(Surv(pbc_sna$time, status1) ~ grupos_copper, rho = 1)
+
+
+# platelet: cuenta de plaquetas.
+grupos_platelet <-
+  factor(ifelse(pbc_sna$platelet < 200, "platelet0-199.99", "platelet>200"))
+
+fit_platelet <-
+  survfit(
+    Surv(pbc_sna$time, status1) ~ grupos_platelet,
+    type = "kaplan-meier",
+    conf.type = "plain"
+  )
+#Gráfico
+g_platelet <-
+  ggsurvplot(
+    fit_platelet,
+    data = pbc_sna,
+    palette = c('#6930c3', "#5e60ce"),
+    conf.int = T,
+    censor = F
+  )
+#Estadístico : H0:son iguales las funciones de supervivencia por subcategoría vs H1: son dsitintas
+survdiff(Surv(pbc_sna$time, status1) ~ grupos_platelet, rho = 0)
+survdiff(Surv(pbc_sna$time, status1) ~ grupos_platelet, rho = 1)
+
+
+# protime: (standardised blood clotting time ) tiempo estandarizado de coagulación de la sangre.
+#Análogo a la explicación anterior vamos a proceder
+quantile(pbc_sna$protime)
+
+grupos_protime <-
+  factor(ifelse(pbc_sna$protime < 11, "protime0-10.99", "protime>11"))
+fit_protime <-
+  survfit(Surv(pbc_sna$time, status1) ~ grupos_protime,
+          type = "kaplan-meier",
+          conf.type = "plain")
+#Gráfico
+g_protime <-
+  ggsurvplot(
+    fit_protime,
+    data = pbc_sna,
+    palette = c("#f28f3b", "#c8553d"),
+    conf.int = T,
+    censor = F
+  )
+#Estadístico : H0:son iguales las funciones de supervivencia por subcategoría vs H1: son dsitintas
+survdiff(Surv(pbc_sna$time, status1) ~ grupos_protime, rho = 0)
+survdiff(Surv(pbc_sna$time, status1) ~ grupos_protime, rho = 1)
+
+# trig: triglicéridos (mg/dl).
+#Análogo a la explicación anterior vamos a proceder
+quantile(pbc_sna$trig)
+
+grupos_trig <-
+  factor(ifelse(pbc_sna$trig < 150, "trig0-150", "trig>150"))
+
+fit_trig <-
+  survfit(Surv(pbc_sna$time, status1) ~ grupos_trig,
+          type = "kaplan-meier",
+          conf.type = "plain")
+#Gráfico
+g_trig <-
+  ggsurvplot(
+    fit_trig,
+    data = pbc_sna,
+    palette = c('#da627d', "#a53860"),
+    conf.int = T,
+    censor = F
+  )
+#Estadístico : H0:son iguales las funciones de supervivencia por subcategoría vs H1: son dsitintas
+survdiff(Surv(pbc_sna$time, status1) ~ grupos_trig, rho = 0)
+survdiff(Surv(pbc_sna$time, status1) ~ grupos_trig, rho = 1)
+
+
+# Graficos juntos
+arrange_ggsurvplots(
+  list(g_copper,
+       g_trig,
+       g_platelet,
+       g_alk.phos,
+       g_bili,
+       g_chol),
+  ncol = 3,
+  nrow = 2
+)
+
+arrange_ggsurvplots(list(g_age,
+                         g_albumin,
+                         g_ast,
+                         g_protime),
+                    ncol = 2,
+                    nrow = 2)
+
 
 
 # Variables Categóricas ----
 
-  # ascites: presencia de ascitis valores 0 y 1.
-fit_ascites <- survfit(Surv(pbc_sna$time,status1)~pbc_sna$ascites, type='kaplan-meier', conf.type='plain')
-      #Gráfico
-g_ascites <- ggsurvplot(fit_ascites, data = pbc_sna, palette = c('#F9F918',"#929203"),conf.int = T, censor = F)
+# ascites: presencia de ascitis valores 0 y 1.
+fit_ascites <-
+  survfit(
+    Surv(pbc_sna$time, status1) ~ pbc_sna$ascites,
+    type = 'kaplan-meier',
+    conf.type = 'plain'
+  )
+#Gráfico
+g_ascites <-
+  ggsurvplot(
+    fit_ascites,
+    data = pbc_sna,
+    palette = c('#F9F918', "#929203"),
+    conf.int = T,
+    censor = F
+  )
 #Estadístico : H0:son iguales las funciones de supervivencia por subcategoría vs H1: son dsitintas
-survdiff(Surv(pbc_sna$time,status1) ~ pbc_sna$ascites, rho=0)
-survdiff(Surv(pbc_sna$time,status1) ~ pbc_sna$ascites, rho=1)
+survdiff(Surv(pbc_sna$time, status1) ~ pbc_sna$ascites, rho = 0)
+survdiff(Surv(pbc_sna$time, status1) ~ pbc_sna$ascites, rho = 1)
 
 
-  # edema: 0 no edema, 0.5 untreated or successfully treated 1 edema despite diuretic therapy.
-fit_edema <- survfit(Surv(pbc_sna$time,status1)~pbc_sna$edema, type='kaplan-meier', conf.type='plain')
-      #Gráfico
-g_edema <- ggsurvplot(fit_edema, data = pbc_sna, palette = c('#ED4E17','#EEA60C','#F5D317'),conf.int = T,censor = F)
+# edema: 0 no edema, 0.5 untreated or successfully treated 1 edema despite diuretic therapy.
+fit_edema <-
+  survfit(Surv(pbc_sna$time, status1) ~ pbc_sna$edema,
+          type = 'kaplan-meier',
+          conf.type = 'plain')
+#Gráfico
+g_edema <-
+  ggsurvplot(
+    fit_edema,
+    data = pbc_sna,
+    palette = c('#ED4E17', '#EEA60C', '#F5D317'),
+    conf.int = T,
+    censor = F
+  )
 #Estadístico : H0:son iguales las funciones de supervivencia por subcategoría vs H1: son dsitintas
-survdiff(Surv(pbc_sna$time,status1)~pbc_sna$edema, rho=0)
-survdiff(Surv(pbc_sna$time,status1)~pbc_sna$edema, rho=1)
+survdiff(Surv(pbc_sna$time, status1) ~ pbc_sna$edema, rho = 0)
+survdiff(Surv(pbc_sna$time, status1) ~ pbc_sna$edema, rho = 1)
 
 
-  # hepato: presence of hepatomegaly or enlarged liver.
-fit_hepato <- survfit(Surv(pbc_sna$time,status1)~pbc_sna$hepato, type='kaplan-meier', conf.type='plain')
-      #Gráfico
-g_hepato <- ggsurvplot(fit_hepato, data = pbc_sna, palette = c('#98FC2D',"#4D9203"),conf.int = T,censor = F)
+# hepato: presence of hepatomegaly or enlarged liver.
+fit_hepato <-
+  survfit(Surv(pbc_sna$time, status1) ~ pbc_sna$hepato,
+          type = 'kaplan-meier',
+          conf.type = 'plain')
+#Gráfico
+g_hepato <-
+  ggsurvplot(
+    fit_hepato,
+    data = pbc_sna,
+    palette = c('#98FC2D', "#4D9203"),
+    conf.int = T,
+    censor = F
+  )
 #Estadístico : H0:son iguales las funciones de supervivencia por subcategoría vs H1: son dsitintas
-survdiff(Surv(pbc_sna$time,status1)~pbc_sna$hepato, rho=0)
-survdiff(Surv(pbc_sna$time,status1)~pbc_sna$hepato, rho=1)
+survdiff(Surv(pbc_sna$time, status1) ~ pbc_sna$hepato, rho = 0)
+survdiff(Surv(pbc_sna$time, status1) ~ pbc_sna$hepato, rho = 1)
 
 
-  # spiders: (blood vessel malformations in the skin) Malformación en los vasos sanguíneos de la piel, con valores 0 y 1 .
-fit_spiders <- survfit(Surv(pbc_sna$time,status1)~pbc_sna$spiders, type='kaplan-meier', conf.type='plain')
-      #Gráfico
-g_spiders <- ggsurvplot(fit_spiders, data = pbc_sna, palette = c('#9E0081',"#C75DB4"),conf.int = T,censor = F)
+# spiders: (blood vessel malformations in the skin) Malformación en los vasos sanguíneos de la piel, con valores 0 y 1 .
+fit_spiders <-
+  survfit(
+    Surv(pbc_sna$time, status1) ~ pbc_sna$spiders,
+    type = 'kaplan-meier',
+    conf.type = 'plain'
+  )
+#Gráfico
+g_spiders <-
+  ggsurvplot(
+    fit_spiders,
+    data = pbc_sna,
+    palette = c('#9E0081', "#C75DB4"),
+    conf.int = T,
+    censor = F
+  )
 #Estadístico : H0:son iguales las funciones de supervivencia por subcategoría vs H1: son dsitintas
-survdiff(Surv(pbc_sna$time,status1)~pbc_sna$spiders, rho=0)
-survdiff(Surv(pbc_sna$time,status1)~pbc_sna$spiders, rho=1)
+survdiff(Surv(pbc_sna$time, status1) ~ pbc_sna$spiders, rho = 0)
+survdiff(Surv(pbc_sna$time, status1) ~ pbc_sna$spiders, rho = 1)
 
 
 # stage:	Estado de la enfermedad (después de la biopsia).
-fit_stage <- survfit(Surv(pbc_sna$time,status1)~pbc_sna$stage, type='kaplan-meier', conf.type='plain')
-      #Gráfico
-g_stage <- ggsurvplot(fit_stage, data = pbc_sna, palette = c('#8B0542',"#F30672", "#F30635", "#B30326"),conf.int = T,censor = F)
+fit_stage <-
+  survfit(Surv(pbc_sna$time, status1) ~ pbc_sna$stage,
+          type = 'kaplan-meier',
+          conf.type = 'plain')
+#Gráfico
+g_stage <-
+  ggsurvplot(
+    fit_stage,
+    data = pbc_sna,
+    palette = c('#8B0542', "#F30672", "#F30635", "#B30326"),
+    conf.int = T,
+    censor = F
+  )
 #Estadístico : H0:son iguales las funciones de supervivencia por subcategoría vs H1: son dsitintas
-survdiff(Surv(pbc_sna$time,status1)~pbc_sna$stage, rho=0)
-survdiff(Surv(pbc_sna$time,status1)~pbc_sna$stage, rho=1)
+survdiff(Surv(pbc_sna$time, status1) ~ pbc_sna$stage, rho = 0)
+survdiff(Surv(pbc_sna$time, status1) ~ pbc_sna$stage, rho = 1)
 
 
-  # trt: Valores 1, 2 y NA for D-penicillmain, placebo, not randomised.
-fit_trt <- survfit(Surv(pbc_sna$time,status1)~pbc_sna$trt, type='kaplan-meier', conf.type='plain')
-      #Gráfico
-g_trt <- ggsurvplot(fit_trt, data = pbc_sna, palette = c('#DF044A',"#F96C99", "#7D0229"),conf.int = T,censor = F)
+# trt: Valores 1, 2 y NA for D-penicillmain, placebo, not randomised.
+fit_trt <-
+  survfit(Surv(pbc_sna$time, status1) ~ pbc_sna$trt,
+          type = 'kaplan-meier',
+          conf.type = 'plain')
+#Gráfico
+g_trt <-
+  ggsurvplot(
+    fit_trt,
+    data = pbc_sna,
+    palette = c('#DF044A', "#F96C99", "#7D0229"),
+    conf.int = T,
+    censor = F
+  )
 #Estadístico : H0:son iguales las funciones de supervivencia por subcategoría vs H1: son dsitintas
-survdiff(Surv(pbc_sna$time,status1)~pbc_sna$trt, rho=0)
-survdiff(Surv(pbc_sna$time,status1)~pbc_sna$trt, rho=1)
+survdiff(Surv(pbc_sna$time, status1) ~ pbc_sna$trt, rho = 0)
+survdiff(Surv(pbc_sna$time, status1) ~ pbc_sna$trt, rho = 1)
 
 
 # sex: m/f (male/female) valores hombre  y mujer.
-fit_sex <- survfit(Surv(pbc_sna$time,status1)~pbc_sna$sex, type='kaplan-meier', conf.type='plain')
-      #Gráfico
-g_sex <- ggsurvplot(fit_sex, data = pbc_sna, palette = c('#FC6C2D',"#9E3000"),conf.int = T,censor = F)
+fit_sex <-
+  survfit(Surv(pbc_sna$time, status1) ~ pbc_sna$sex,
+          type = 'kaplan-meier',
+          conf.type = 'plain')
+#Gráfico
+g_sex <-
+  ggsurvplot(
+    fit_sex,
+    data = pbc_sna,
+    palette = c('#FC6C2D', "#9E3000"),
+    conf.int = T,
+    censor = F
+  )
 #Estadístico : H0:son iguales las funciones de supervivencia por subcategoría vs H1: son dsitintas
-survdiff(Surv(pbc_sna$time,status1)~pbc_sna$sex, rho=0)
-survdiff(Surv(pbc_sna$time,status1)~pbc_sna$sex, rho=1)
+survdiff(Surv(pbc_sna$time, status1) ~ pbc_sna$sex, rho = 0)
+survdiff(Surv(pbc_sna$time, status1) ~ pbc_sna$sex, rho = 1)
 
-# Las variables categóricas que aceptan H0, es decir que son iguales (sus funciones de supervivencia 
-# comparando las subcategorías) no se considerarán en el modelo de riesgos proporcionales dado que 
-# no hay diferencia entre una función de supervicencia y la otra en esa categoría y por tanto 
+# Las variables categóricas que aceptan H0, es decir que son iguales (sus funciones de supervivencia
+# comparando las subcategorías) no se considerarán en el modelo de riesgos proporcionales dado que
+# no hay diferencia entre una función de supervicencia y la otra en esa categoría y por tanto
 # considerarla en el modelo de riesgos proporcionales como una categoría, no haría diferencia en la
-# estimación en el timepo de superivencia sentro del modelo. 
+# estimación en el timepo de superivencia sentro del modelo.
 
 
-arrange_ggsurvplots(list(g_ascites, g_edema ,g_hepato, g_spiders, g_stage, g_trt, g_sex))
-
-
-
-
-
-
-
-
+arrange_ggsurvplots(
+  list(g_ascites, g_edema , g_hepato, g_spiders, g_stage, g_trt, g_sex),
+  ncol = 4,
+  nrow = 2
+)
