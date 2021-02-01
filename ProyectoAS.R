@@ -3,23 +3,21 @@
 #                                                                Paqueterias  -----
 library(foreign)
 library(survival)
-library(KMsurv)
 library(nlme)
+library(ggplot2)
+
+library(survminer)
+library(KMsurv)
 library(muhaz)
 library(TH.data)
-library(ggplot2)
 library(ggfortify)
 library(proto)
 library(GGally)
 library(gridExtra)
-library(ggplot2)
 library(randomForest)
-library(survminer)
-
 #                                                                 Base de datos
 #Hacemos la base de datos manejable
 data("pbc")
-? pbc
 pbc <- pbc
 str(pbc)
 fc <- c(3, 6, 7, 8, 9, 10, 20)
@@ -207,7 +205,7 @@ ggsurvplot(
 
 # Variables numéricas   ----
 
-# age: edad en años del paciente.
+#age: edad en años del paciente.
 #Dado que tenemos diversas edades (49 diferentes en años) no es posible visualizar
 #la función de supervivencia para cada una de tal forma que determinemos si existe o no
 #diferencia por edad, por lo que agruparemos con el criterio siguiente:
@@ -237,7 +235,20 @@ g_age <-
     data = pbc_sna,
     palette = c('#D55757', "#D59457", "#E1C318"),
     conf.int = T,
-    censor = F
+    censor = F,
+    title = "Edad",
+    xlab = '',
+    ylab = '',
+    legend.title = '',
+    legend.labs = paste('', c('26-39', '40-60', '> 60'))
+  )
+
+# Tamaño leyenda
+g_age$plot <-
+  g_age$plot + theme(
+    legend.text = element_text(size = 9, color = "black", face = "plain"),
+    axis.text.x = element_text(size = 8, color = "black", face = "plain"),
+    axis.text.y = element_text(size = 8, color = "black", face = "plain")
   )
 #Estadístico : H0:son iguales las funciones de supervivencia por subcategoría vs H1: son dsitintas
 survdiff(Surv(pbc_sna$time, status1) ~ grupos_age, rho = 0)
@@ -266,8 +277,22 @@ g_albumin <-
     data = pbc_sna,
     palette = c('#9c528b', "#2f0147", "#610f7f"),
     conf.int = T,
-    censor = F
+    censor = F,
+    title = "Albumina de suero",
+    xlab = '',
+    ylab = '',
+    legend.title = '',
+    legend.labs = paste('', c('> 4', '0-2.99', '3-4'))
   )
+
+# Tamaño leyenda
+g_albumin$plot <-
+  g_albumin$plot + theme(
+    legend.text = element_text(size = 9, color = "black", face = "plain"),
+    axis.text.x = element_text(size = 8, color = "black", face = "plain"),
+    axis.text.y = element_text(size = 8, color = "black", face = "plain")
+  )
+
 #Estadístico : H0:son iguales las funciones de supervivencia por subcategoría vs H1: son dsitintas
 survdiff(Surv(pbc_sna$time, status1) ~ grupos_albumin, rho = 0)
 survdiff(Surv(pbc_sna$time, status1) ~ grupos_albumin, rho = 1)
@@ -293,8 +318,21 @@ g_alk.phos <-
     data = pbc_sna,
     palette = c('#FE8423', "#FEB923"),
     conf.int = T,
-    censor = F
+    censor = F,
+    title = "Fosfata alcalina",
+    xlab = '',
+    ylab = '',
+    legend.title = '',
+    legend.labs = paste('', c('> 300', '289-300'))
   )
+
+g_alk.phos$plot <-
+  g_alk.phos$plot + theme(
+    legend.text = element_text(size = 9, color = "black", face = "plain"),
+    axis.text.x = element_text(size = 8, color = "black", face = "plain"),
+    axis.text.y = element_text(size = 8, color = "black", face = "plain")
+  )
+
 #Estadístico : H0:son iguales las funciones de supervivencia por subcategoría vs H1: son dsitintas
 survdiff(Surv(pbc_sna$time, status1) ~ grupos_alk.phos, rho = 0)
 survdiff(Surv(pbc_sna$time, status1) ~ grupos_alk.phos, rho = 1)
@@ -323,8 +361,21 @@ g_ast <-
     data = pbc_sna,
     palette = c('#51B85F', "#4798A3", "#47A387"),
     conf.int = T,
-    censor = F
+    censor = F,
+    title = "Aspartato aminotransferasa",
+    xlab = '',
+    ylab = '',
+    legend.title = '',
+    legend.labs = paste('', c('> 174', '26-72.99', '73-174'))
   )
+
+g_ast$plot <-
+  g_ast$plot + theme(
+    legend.text = element_text(size = 9, color = "black", face = "plain"),
+    axis.text.x = element_text(size = 8, color = "black", face = "plain"),
+    axis.text.y = element_text(size = 8, color = "black", face = "plain")
+  )
+
 #Estadístico : H0:son iguales las funciones de supervivencia por subcategoría vs H1: son dsitintas
 survdiff(Surv(pbc_sna$time, status1) ~ grupos_ast, rho = 0)
 survdiff(Surv(pbc_sna$time, status1) ~ grupos_ast, rho = 1)
@@ -352,8 +403,21 @@ g_bili <-
     data = pbc_sna,
     palette = c('#729F2E', "#2E9F69", "#409F2E"),
     conf.int = T,
-    censor = F
+    censor = F,
+    title = "Bilirrubina",
+    xlab = '',
+    ylab = '',
+    legend.title = '',
+    legend.labs = paste('', c('0.3-1.99', '> 3', '2 - 3'))
   )
+
+g_bili$plot <-
+  g_bili$plot + theme(
+    legend.text = element_text(size = 9, color = "black", face = "plain"),
+    axis.text.x = element_text(size = 8, color = "black", face = "plain"),
+    axis.text.y = element_text(size = 8, color = "black", face = "plain")
+  )
+
 #Estadístico : H0:son iguales las funciones de supervivencia por subcategoría vs H1: son dsitintas
 survdiff(Surv(pbc_sna$time, status1) ~ grupos_bili, rho = 0)
 survdiff(Surv(pbc_sna$time, status1) ~ grupos_bili, rho = 1)
@@ -375,8 +439,21 @@ g_chol <-
     data = pbc_sna,
     palette = c('#40916c', "#52b788"),
     conf.int = T,
-    censor = F
+    censor = F,
+    title = "Colesterol",
+    xlab = '',
+    ylab = '',
+    legend.title = '',
+    legend.labs = paste('', c('0-199.9', '> 200'))
   )
+
+g_chol$plot <-
+  g_chol$plot + theme(
+    legend.text = element_text(size = 9, color = "black", face = "plain"),
+    axis.text.x = element_text(size = 8, color = "black", face = "plain"),
+    axis.text.y = element_text(size = 8, color = "black", face = "plain")
+  )
+
 #Estadístico : H0:son iguales las funciones de supervivencia por subcategoría vs H1: son dsitintas
 survdiff(Surv(pbc_sna$time, status1) ~ grupos_chol, rho = 0)
 survdiff(Surv(pbc_sna$time, status1) ~ grupos_chol, rho = 1)
@@ -404,8 +481,21 @@ g_copper <-
     data = pbc_sna,
     palette = c('#DB73E3', "#6E3971", "#A456AA"),
     conf.int = T,
-    censor = F
+    censor = F,
+    title = "Cobre",
+    xlab = '',
+    ylab = '',
+    legend.title = '',
+    legend.labs = paste('', c('> 140', '4-69.99', '70-140'))
   )
+
+g_copper$plot <-
+  g_copper$plot + theme(
+    legend.text = element_text(size = 9, color = "black", face = "plain"),
+    axis.text.x = element_text(size = 8, color = "black", face = "plain"),
+    axis.text.y = element_text(size = 8, color = "black", face = "plain")
+  )
+
 #Estadístico : H0:son iguales las funciones de supervivencia por subcategoría vs H1: son dsitintas
 survdiff(Surv(pbc_sna$time, status1) ~ grupos_copper, rho = 0)
 survdiff(Surv(pbc_sna$time, status1) ~ grupos_copper, rho = 1)
@@ -428,8 +518,21 @@ g_platelet <-
     data = pbc_sna,
     palette = c('#6930c3', "#5e60ce"),
     conf.int = T,
-    censor = F
+    censor = F,
+    title = "Plaquetas",
+    xlab = '',
+    ylab = '',
+    legend.title = '',
+    legend.labs = paste('', c('> 200', '0-199.99'))
   )
+
+g_platelet$plot <-
+  g_platelet$plot + theme(
+    legend.text = element_text(size = 9, color = "black", face = "plain"),
+    axis.text.x = element_text(size = 8, color = "black", face = "plain"),
+    axis.text.y = element_text(size = 8, color = "black", face = "plain")
+  )
+
 #Estadístico : H0:son iguales las funciones de supervivencia por subcategoría vs H1: son dsitintas
 survdiff(Surv(pbc_sna$time, status1) ~ grupos_platelet, rho = 0)
 survdiff(Surv(pbc_sna$time, status1) ~ grupos_platelet, rho = 1)
@@ -452,8 +555,21 @@ g_protime <-
     data = pbc_sna,
     palette = c("#f28f3b", "#c8553d"),
     conf.int = T,
-    censor = F
+    censor = F,
+    title = "Tiempo de coagulación",
+    xlab = '',
+    ylab = 'Probabilidad',
+    legend.title = '',
+    legend.labs = paste('', c('> 11', '0 - 10.99'))
   )
+
+g_protime$plot <-
+  g_protime$plot + theme(
+    legend.text = element_text(size = 9, color = "black", face = "plain"),
+    axis.text.x = element_text(size = 8, color = "black", face = "plain"),
+    axis.text.y = element_text(size = 8, color = "black", face = "plain")
+  )
+
 #Estadístico : H0:son iguales las funciones de supervivencia por subcategoría vs H1: son dsitintas
 survdiff(Surv(pbc_sna$time, status1) ~ grupos_protime, rho = 0)
 survdiff(Surv(pbc_sna$time, status1) ~ grupos_protime, rho = 1)
@@ -476,8 +592,21 @@ g_trig <-
     data = pbc_sna,
     palette = c('#da627d', "#a53860"),
     conf.int = T,
-    censor = F
+    censor = F,
+    title = "Triglicéridos",
+    xlab = '',
+    ylab = 'Probabilidad',
+    legend.title = '',
+    legend.labs = paste('', c('> 150', '0-150'))
   )
+
+g_trig$plot <-
+  g_trig$plot + theme(
+    legend.text = element_text(size = 9, color = "black", face = "plain"),
+    axis.text.x = element_text(size = 8, color = "black", face = "plain"),
+    axis.text.y = element_text(size = 8, color = "black", face = "plain")
+  )
+
 #Estadístico : H0:son iguales las funciones de supervivencia por subcategoría vs H1: son dsitintas
 survdiff(Surv(pbc_sna$time, status1) ~ grupos_trig, rho = 0)
 survdiff(Surv(pbc_sna$time, status1) ~ grupos_trig, rho = 1)
@@ -485,24 +614,20 @@ survdiff(Surv(pbc_sna$time, status1) ~ grupos_trig, rho = 1)
 
 # Graficos juntos
 arrange_ggsurvplots(
-  list(g_copper,
-       g_trig,
-       g_platelet,
-       g_alk.phos,
-       g_bili,
-       g_chol),
+  list(
+    g_protime,
+    g_trig,
+    g_age,
+    g_albumin,
+    g_alk.phos,
+    g_copper,
+    g_bili,
+    g_platelet,
+    g_chol
+  ),
   ncol = 3,
-  nrow = 2
+  nrow = 3
 )
-
-arrange_ggsurvplots(list(g_age,
-                         g_albumin,
-                         g_ast,
-                         g_protime),
-                    ncol = 2,
-                    nrow = 2)
-
-
 
 # Variables Categóricas ----
 
@@ -654,3 +779,4 @@ arrange_ggsurvplots(
   ncol = 4,
   nrow = 2
 )
+
