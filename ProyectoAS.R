@@ -1,5 +1,10 @@
-#PROYECTO ANÁLISIS DE SUPERVIVENCIA
-
+#                       PROYECTO ANÁLISIS DE SUPERVIVENCIA
+# Equipo:
+# 6.  Avila Argüello Carlos
+# 10. Bonilla Cruz José Armando
+# 39. Gutierrez Luna Yanley
+# 64. Reyes González Belén
+# 67. Rivera Mata Dante Tristán
 #                                                                Paqueterias  -----
 library(foreign)
 library(survival)
@@ -198,7 +203,9 @@ ggsurvplot(
   data = pbc_sna,
   palette = c('#390E7F', '#390E7F'),
   conf.int = T,
-  censor = F
+  censor = F, 
+  surv.median.line = "hv",
+  ggtheme = theme_bw()
 )
 
 # 2. Ver la significancia de las covariables
@@ -319,7 +326,7 @@ g_alk.phos <-
     palette = c('#FE8423', "#FEB923"),
     conf.int = T,
     censor = F,
-    title = "Fosfata alcalina",
+    title = "Fosfatasa alcalina",
     xlab = '',
     ylab = '',
     legend.title = '',
@@ -779,4 +786,115 @@ arrange_ggsurvplots(
   ncol = 4,
   nrow = 2
 )
+
+
+#                                                                     Modelo  ----
+#Para poder realizar el modelo de las covariables que tengan importancia o 
+#significancia en los riesgos proporcionales haremos las prubas de cox por cada variable.
+
+#Si el p-value es menor que alpha, entonces rechazamos la hipótesis nula que dice que 
+#"el coeficiente asociado al factor correspondiente es cero (lo cual implicaría que no es 
+#segnificativo dicho factor para el modelo de riesgos proporcionales)" al nivel de significancia 
+#del 20%. 
+
+#Variables numéricas    ----
+
+#age
+coxph(Surv(pbc_sna$time, status1)~pbc_sna$age)
+
+#albumin
+coxph(Surv(pbc_sna$time, status1)~pbc_sna$albumin)
+
+#alk.phos
+coxph(Surv(pbc_sna$time, status1)~pbc_sna$alk.phos)
+
+#ast
+coxph(Surv(pbc_sna$time, status1)~pbc_sna$ast)
+
+#bili
+coxph(Surv(pbc_sna$time, status1)~pbc_sna$bili)
+
+#chol
+coxph(Surv(pbc_sna$time, status1)~pbc_sna$chol)
+
+#copper
+coxph(Surv(pbc_sna$time, status1)~pbc_sna$copper)
+
+#platelet
+coxph(Surv(pbc_sna$time, status1)~pbc_sna$platelet)
+
+#protime
+coxph(Surv(pbc_sna$time, status1)~pbc_sna$protime)
+
+#trig
+coxph(Surv(pbc_sna$time, status1)~pbc_sna$trig)
+
+#Variables categóricas  ----
+
+#ascites
+coxph(Surv(pbc_sna$time, status1)~pbc_sna$ascites)
+
+#edema
+coxph(Surv(pbc_sna$time, status1)~pbc_sna$edema)
+
+#hepato
+coxph(Surv(pbc_sna$time, status1)~pbc_sna$hepato)
+
+#sex
+coxph(Surv(pbc_sna$time, status1)~pbc_sna$sex)
+
+#spiders
+coxph(Surv(pbc_sna$time, status1)~pbc_sna$spiders)
+
+#stage
+coxph(Surv(pbc_sna$time, status1)~pbc_sna$stage)
+
+#trt
+coxph(Surv(pbc_sna$time, status1)~pbc_sna$trt)
+
+# El modelo.            ----
+#Para poder contrastar los resultados analicemos el modelo 0 que 
+#considerarará todas las covariables (pesea a que no sean significativas)
+modelo_0 <- coxph(Surv(pbc_sna$time, status1)~
+                  pbc_sna$age
+                + pbc_sna$albumin
+                + pbc_sna$ast
+                + pbc_sna$bili
+                + pbc_sna$copper
+                + pbc_sna$platelet
+                + pbc_sna$protime
+                + pbc_sna$trig
+                + pbc_sna$ascites
+                + pbc_sna$edema
+                + pbc_sna$hepato
+                + pbc_sna$spiders
+                + pbc_sna$stage
+                + pbc_sna$sex
+                + pbc_sna$chol
+                + pbc_sna$alk.phos
+                + pbc_sna$trt)
+# H0: los riesgos son proporcionales vs H1: los riesgos NO SON proporcionales
+cox.zph(modelo_0)
+modelo <- coxph(Surv(pbc_sna$time, status1)~
+                  pbc_sna$age
+                + pbc_sna$albumin
+                + pbc_sna$ast
+                + pbc_sna$copper
+                + pbc_sna$platelet
+                + pbc_sna$ascites
+                + pbc_sna$edema
+                + pbc_sna$hepato
+                + pbc_sna$spiders
+                + pbc_sna$stage)
+# H0: los riesgos son proporcionales vs H1: los riesgos NO SON proporcionales
+cox.zph(modelo)
+df <- data.frame(modelo$coefficients, exp(modelo$coefficients), 
+                 row.names = c('age', 'albumin', 'ast', 
+                              'copper', 'platelet', 'ascites1',
+                              'edema0.5','edema1', 'hepato1', 
+                              'spiders1', 'stage2','stage3',
+                              'stage4') )
+colnames(df) <- c('Coeficientes', 'Exp(Coeficientes)')
+df
+
 
