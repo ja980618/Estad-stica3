@@ -888,13 +888,194 @@ modelo <- coxph(Surv(pbc_sna$time, status1)~
                 + pbc_sna$stage)
 # H0: los riesgos son proporcionales vs H1: los riesgos NO SON proporcionales
 cox.zph(modelo)
-df <- data.frame(modelo$coefficients, exp(modelo$coefficients), 
+df <- data.frame(modelo$coefficients, 
+                 confint(modelo, level = .9),
+                 exp(modelo$coefficients),
                  row.names = c('age', 'albumin', 'ast', 
                               'copper', 'platelet', 'ascites1',
                               'edema0.5','edema1', 'hepato1', 
                               'spiders1', 'stage2','stage3',
                               'stage4') )
-colnames(df) <- c('Coeficientes', 'Exp(Coeficientes)')
+colnames(df) <- c('Coeficientes', '5%', '95%', 'Exp(Coef)')
 df
+
+# ¿Las variables tienen efecto en el modelo?
+
+#Residuos martingala: notar linealidad ----
+residuos_mtg <- residuals(modelo,type='martingale')
+#Age
+plot(
+  pbc_sna$age,
+  residuos_mtg,
+  xlab = "Edad",
+  ylab = "Residuos Martingala",
+  main = "Modelo propuesta",
+  pch = 19,
+  cex = 0.5,
+  col = "orange"
+)
+lines(smooth.spline(residuos_mtg ~ pbc_sna$age),
+      col = "red",
+      lwd = 2)
+lines(pbc_sna$age, fitted(lm(residuos_mtg ~ pbc_sna$age)), col = "purple", lwd = 2)
+
+#albumin
+plot(
+  pbc_sna$albumin,
+  residuos_mtg,
+    xlab = "Albúmina",
+  ylab = "Residuos Martingala",
+  main = "Modelo propuesta",
+  pch = 19,
+  cex = 0.5,
+  col = "orange"
+)
+lines(smooth.spline(residuos_mtg ~ pbc_sna$albumin),
+      col = "red",
+      lwd = 2)
+lines(pbc_sna$albumin, fitted(lm(residuos_mtg ~ pbc_sna$albumin)), col = "purple", lwd = 2)
+
+#ast
+plot(
+  pbc_sna$ast,
+  residuos_mtg,
+  xlab = "Ast",
+  ylab = "Residuos Martingala",
+  main = "Modelo propuesta",
+  pch = 19,
+  cex = 0.5,
+  col = "orange"
+)
+lines(smooth.spline(residuos_mtg ~ pbc_sna$ast),
+      col = "red",
+      lwd = 2)
+lines(pbc_sna$ast, fitted(lm(residuos_mtg ~ pbc_sna$ast)), col = "purple", lwd = 2)
+
+#copper
+plot(
+  pbc_sna$copper,
+  residuos_mtg,
+  xlab = "Cobre en orina",
+  ylab = "Residuos Martingala",
+  main = "Modelo propuesta",
+  pch = 19,
+  cex = 0.5,
+  col = "orange"
+)
+lines(smooth.spline(residuos_mtg ~ pbc_sna$copper),
+      col = "red",
+      lwd = 2)
+lines(pbc_sna$copper, fitted(lm(residuos_mtg ~ pbc_sna$copper)), col = "purple", lwd = 2)
+
+#platelet
+plot(
+  pbc_sna$platelet,
+  residuos_mtg,
+  xlab = "Plaquetas en la sangre",
+  ylab = "Residuos Martingala",
+  main = "Modelo propuesta",
+  pch = 19,
+  cex = 0.5,
+  col = "orange"
+)
+lines(smooth.spline(residuos_mtg ~ pbc_sna$platelet),
+      col = "red",
+      lwd = 2)
+lines(pbc_sna$platelet, fitted(lm(residuos_mtg ~ pbc_sna$platelet)), col = "purple", lwd = 2)
+
+#Valores outliers/influyentes: dfBetas ----
+residuos_dfbetas <- resid(modelo, type = "dfbeta")
+# 'age' 
+plot(
+  residuos_dfbetas[,1],
+  xlab = "Edad",
+  ylab = "dfBeta",
+  main = "Modelo propuesta",
+  pch = 19,
+  cex = 0.5,
+  col = "orange"
+)
+
+nombres <- row.names(df)
+colores <-
+  c(
+    '#deebf7',
+    '#deebf7',
+    '#98a222',
+    '#ffa36f',
+    '#ffa36f',
+    '#75287a',
+    '#d08fa6',
+    '#45e900',
+    '#be4a2f',
+    '#58599b',
+    '#202143',
+    '#2171b5',
+    '#2171b5'
+    )
+
+par(mfrow =c(2,3))
+for (i in 1:6) {
+  plot(
+    residuos_dfbetas[,i],
+    xlab = "Modelo Propuesta",
+    ylab = "dfBeta",
+    main = nombres[i],
+    pch = 19,
+    cex = 0.5,
+    col = colores[i],
+    type = "h"
+  )
+}
+par(mfrow =c(2,3))
+for (i in 7:12) {
+  plot(
+    residuos_dfbetas[,i],
+    xlab = "Modelo Propuesta",
+    ylab = "dfBeta",
+    main = nombres[i],
+    pch = 19,
+    cex = 0.5,
+    col = colores[i],
+    type = "h"
+  )
+}
+
+plot(
+  residuos_dfbetas[,13],
+  xlab = "Modelo Propuesta",
+  ylab = "dfBeta",
+  main = nombres[13],
+  pch = 19,
+  cex = 0.5,
+  col = colores[13],
+  type = "h"
+)
+
+# 'albumin' 
+# 'ast' 
+# 'copper' 
+# 'platelet' 
+# 'ascites1'
+# 'edema0.5'
+# 'edema1'
+# 'hepato1' 
+# 'spiders1' 
+# 'stage2'
+# 'stage3'
+# 'stage4'
+
+
+#Residos Cox Snell
+
+
+
+
+
+
+
+
+
+
 
 
