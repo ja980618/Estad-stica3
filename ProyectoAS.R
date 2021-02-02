@@ -5,7 +5,7 @@
 # 39. Gutierrez Luna Yanley
 # 64. Reyes González Belén
 # 67. Rivera Mata Dante Tristán
-#                                                                Paqueterias  -----
+#                                                      Paqueterias -----
 library(foreign)
 library(survival)
 library(nlme)
@@ -38,7 +38,7 @@ pbc_sna$trt <- as.factor(pbc_sna$trt)
 str(pbc_sna)
 summary(pbc_sna)
 attach(pbc_sna)
-#                                                       Análisis descriptivo  ----
+#                                             Análisis descriptivo ----
 #Dado que tenemos muchas variables, las dividimos en dos principales grupos
 #numéricas y categóricas.
 
@@ -78,7 +78,7 @@ ggplot(pbc, aes(x = time, fill = ..x..)) +
   )
 
 colores <- c("lightblue", "lightgreen", "yellow", "pink")
-# Variables categóricas ----
+# Variables categóricas                 ----
 g1 <-
   ggplot(pbc_sna, aes(x = status)) + geom_bar(fill = colores[1:3]) + ggtitle("Status") +
   theme_classic()
@@ -105,7 +105,7 @@ g8 <-
   theme_classic()
 grid.arrange(g1, g2, g3, g4, g5, g6, g7, g8, ncol = 4)
 
-# Variables numéricas   ----
+# Variables numéricas                   ----
 #Dado que tenemos muchas variables numéricas y es iterativa la forma de hacer las gráficas
 #hemos decidido automatixar el procesos de graficado para que no se extienda demasiado el
 #código:
@@ -178,7 +178,7 @@ grid.arrange(h_c[[1]], h_c[[2]], h_c[[3]], h_c[[4]], h_c[[5]], h_c[[6]], ncol =
                3)
 grid.arrange(h_c[[7]], h_c[[8]], h_c[[9]], h_c[[10]], ncol = 2)
 
-# Comentario            ----
+# Comentario                            ----
 #Dado que, además de tener falla y censura en el estudio, se considera el transplante
 #de hígado, vamos a agruparlo como censura. La razón es que cuando un paciente que
 #vive con la enfermedad recibe un hígado, el estudio para conocer la efectividad del
@@ -188,11 +188,11 @@ status1 <-
     pattern = 2,
     replacement = 1,
     gsub(pattern = 1, replacement = 0, pbc_sna$status)
-  )
+    )
 table(status1)
 status1 <- as.numeric(status1)
 
-#                                                       Análisis Estadístico  ----
+#                                             Análisis Estadístico ----
 # 1. Obtenga el estimador K-M
 fit_pbc <-
   survfit(Surv(pbc_sna$time , as.numeric(status1)) ~ 1,
@@ -210,7 +210,7 @@ ggsurvplot(
 
 # 2. Ver la significancia de las covariables
 
-# Variables numéricas   ----
+# Variables numéricas                   ----
 
 #age: edad en años del paciente.
 #Dado que tenemos diversas edades (49 diferentes en años) no es posible visualizar
@@ -636,7 +636,7 @@ arrange_ggsurvplots(
   nrow = 3
 )
 
-# Variables Categóricas ----
+# Variables Categóricas                 ----
 
 # ascites: presencia de ascitis valores 0 y 1.
 fit_ascites <-
@@ -788,7 +788,7 @@ arrange_ggsurvplots(
 )
 
 
-#                                                                     Modelo  ----
+#                                                           Modelo ----
 #Para poder realizar el modelo de las covariables que tengan importancia o 
 #significancia en los riesgos proporcionales haremos las prubas de cox por cada variable.
 
@@ -797,7 +797,7 @@ arrange_ggsurvplots(
 #segnificativo dicho factor para el modelo de riesgos proporcionales)" al nivel de significancia 
 #del 20%. 
 
-#Variables numéricas    ----
+# Variables numéricas                   ----
 
 #age
 coxph(Surv(pbc_sna$time, status1)~pbc_sna$age)
@@ -829,7 +829,7 @@ coxph(Surv(pbc_sna$time, status1)~pbc_sna$protime)
 #trig
 coxph(Surv(pbc_sna$time, status1)~pbc_sna$trig)
 
-#Variables categóricas  ----
+# Variables categóricas                 ----
 
 #ascites
 coxph(Surv(pbc_sna$time, status1)~pbc_sna$ascites)
@@ -852,7 +852,7 @@ coxph(Surv(pbc_sna$time, status1)~pbc_sna$stage)
 #trt
 coxph(Surv(pbc_sna$time, status1)~pbc_sna$trt)
 
-# El modelo.            ----
+# El modelo.                            ----
 #Para poder contrastar los resultados analicemos el modelo 0 que 
 #considerarará todas las covariables (pesea a que no sean significativas)
 modelo_0 <- coxph(Surv(pbc_sna$time, status1)~
@@ -901,8 +901,9 @@ df
 
 # ¿Las variables tienen efecto en el modelo?
 
-#Residuos martingala: notar linealidad ----
+# Residuos martingala: notar linealidad ----
 residuos_mtg <- residuals(modelo,type='martingale')
+par(mfrow = c(1,2))
 #Age
 plot(
   pbc_sna$age,
@@ -983,35 +984,25 @@ lines(smooth.spline(residuos_mtg ~ pbc_sna$platelet),
       lwd = 2)
 lines(pbc_sna$platelet, fitted(lm(residuos_mtg ~ pbc_sna$platelet)), col = "purple", lwd = 2)
 
-#Valores outliers/influyentes: dfBetas ----
+# Valores outliers/influyentes: dfBetas ----
 residuos_dfbetas <- resid(modelo, type = "dfbeta")
-# 'age' 
-plot(
-  residuos_dfbetas[,1],
-  xlab = "Edad",
-  ylab = "dfBeta",
-  main = "Modelo propuesta",
-  pch = 19,
-  cex = 0.5,
-  col = "orange"
-)
 
 nombres <- row.names(df)
 colores <-
   c(
-    '#deebf7',
-    '#deebf7',
-    '#98a222',
-    '#ffa36f',
-    '#ffa36f',
-    '#75287a',
-    '#d08fa6',
-    '#45e900',
-    '#be4a2f',
-    '#58599b',
-    '#202143',
-    '#2171b5',
-    '#2171b5'
+    "#96DBD4",
+    "#96BFDB",
+    "#969DDB",
+    "#B296DB",
+    "#D496DB",
+    "#DB96BF",
+    '#DD866E',
+    '#DDBE6E',
+    '#C5DD6E',
+    '#8EDD6E',
+    '#6EDD86',
+    '#6EDDBE',
+    "orange"
     )
 
 par(mfrow =c(2,3))
@@ -1026,6 +1017,7 @@ for (i in 1:6) {
     col = colores[i],
     type = "h"
   )
+  identify(residuos_dfbetas[,i], labels = pbc_sna$id)
 }
 par(mfrow =c(2,3))
 for (i in 7:12) {
@@ -1039,8 +1031,9 @@ for (i in 7:12) {
     col = colores[i],
     type = "h"
   )
+  identify(residuos_dfbetas[,i], labels = pbc_sna$id)
 }
-
+par(mfrow =c(1,1))
 plot(
   residuos_dfbetas[,13],
   xlab = "Modelo Propuesta",
@@ -1051,31 +1044,258 @@ plot(
   col = colores[13],
   type = "h"
 )
+identify(residuos_dfbetas[,13], labels = pbc_sna$id)
 
-# 'albumin' 
-# 'ast' 
-# 'copper' 
-# 'platelet' 
-# 'ascites1'
-# 'edema0.5'
-# 'edema1'
-# 'hepato1' 
-# 'spiders1' 
-# 'stage2'
-# 'stage3'
-# 'stage4'
+# Datos atípicos                        ----
+#La función identify nos sirvió para identificar los datos atípicos.
+atipicos <- sort(c(23, 253, 317, 166, 314, 293, 371, 52))
+
+#Quitamos los datos atípicos 
+pbc_sna_sda <- pbc_sna[-atipicos,]
+status_bien <- status1[-atipicos]
+
+#                                                     Modelo final ----
+modelo_bien <- coxph(Surv(pbc_sna_sda$time, status_bien)~
+                    pbc_sna_sda$age
+                  + pbc_sna_sda$albumin
+                  + pbc_sna_sda$ast
+                  + pbc_sna_sda$copper
+                  + pbc_sna_sda$platelet
+                  + pbc_sna_sda$ascites
+                  + pbc_sna_sda$edema
+                  + pbc_sna_sda$hepato
+                  + pbc_sna_sda$spiders
+                  + pbc_sna_sda$stage)
+
+# Verificación de supuestos             ----
+
+# Comparando las gráficas anteriores sobre los supuestos de linealidad
+# (residuos martinalas) y los datos atídicos (dfBetas) podremos notar facilmente
+# que el modelo que no considera datos atípicos cumple mejor los supuestos para 
+# un modelo de Cox (riesgos proporcionales).
+residuos_bien_mtg <- residuals(modelo_bien, type='martingale')
+residuos_bien_dfbetas <- resid(modelo_bien, type = "dfbeta")
+#Age
+plot(
+  pbc_sna_sda$age,
+  residuos_bien_mtg,
+  xlab = "Edad",
+  ylab = "Residuos Martingala",
+  main = "Modelo propuesta sda",
+  pch = 19,
+  cex = 0.5,
+  col = "orange"
+)
+lines(smooth.spline(residuos_bien_mtg ~ pbc_sna_sda$age),
+      col = "red",
+      lwd = 2)
+lines(pbc_sna_sda$age, fitted(lm(residuos_bien_mtg ~ pbc_sna_sda$age)), col = "purple", lwd = 2)
+
+#albumin
+plot(
+  pbc_sna_sda$albumin,
+  residuos_bien_mtg,
+  xlab = "Albúmina",
+  ylab = "Residuos Martingala",
+  main = "Modelo propuesta sda",
+  pch = 19,
+  cex = 0.5,
+  col = "orange"
+)
+lines(smooth.spline(residuos_bien_mtg ~ pbc_sna_sda$albumin),
+      col = "red",
+      lwd = 2)
+lines(pbc_sna_sda$albumin, fitted(lm(residuos_bien_mtg ~ pbc_sna_sda$albumin)), col = "purple", lwd = 2)
+
+#ast
+plot(
+  pbc_sna_sda$ast,
+  residuos_bien_mtg,
+  xlab = "Ast",
+  ylab = "Residuos Martingala",
+  main = "Modelo propuesta sda",
+  pch = 19,
+  cex = 0.5,
+  col = "orange"
+)
+lines(smooth.spline(residuos_bien_mtg ~ pbc_sna_sda$ast),
+      col = "red",
+      lwd = 2)
+lines(pbc_sna_sda$ast, fitted(lm(residuos_bien_mtg ~ pbc_sna_sda$ast)), col = "purple", lwd = 2)
+
+#copper
+plot(
+  pbc_sna_sda$copper,
+  residuos_bien_mtg,
+  xlab = "Cobre en orina",
+  ylab = "Residuos Martingala",
+  main = "Modelo propuesta sda",
+  pch = 19,
+  cex = 0.5,
+  col = "orange"
+)
+lines(smooth.spline(residuos_bien_mtg ~ pbc_sna_sda$copper),
+      col = "red",
+      lwd = 2)
+lines(pbc_sna_sda$copper, fitted(lm(residuos_bien_mtg ~ pbc_sna_sda$copper)), col = "purple", lwd = 2)
+
+#platelet
+plot(
+  pbc_sna_sda$platelet,
+  residuos_bien_mtg,
+  xlab = "Plaquetas en la sangre",
+  ylab = "Residuos Martingala",
+  main = "Modelo propuesta sda",
+  pch = 19,
+  cex = 0.5,
+  col = "orange"
+)
+lines(smooth.spline(residuos_bien_mtg ~ pbc_sna_sda$platelet),
+      col = "red",
+      lwd = 2)
+lines(pbc_sna_sda$platelet, fitted(lm(residuos_bien_mtg ~ pbc_sna_sda$platelet)), col = "purple", lwd = 2)
+
+# Reisgos proporcionales                ----
+#coxph
+par(mfrow = c(1,2))
+aux <-
+  survfit(coxph(Surv((status_bien - residuos_bien_mtg), status_bien
+  ) ~ 1), type = 'kaplan-meier')
+plot(
+  aux$time,
+  -log(aux$surv),
+  type = 's',
+  xlab = 'Residuos de Cox-Snell',
+  ylab = 'Residuos acumulados',
+  main = 'Riesgos proporcionales, modelo sda',
+  col = '#AF130B',
+  lwd = 1.8
+)
+abline(0, 1, col = '#ED4607', lwd = 2)
 
 
-#Residos Cox Snell
+aux1 <-
+  survfit(coxph(Surv((
+    status1 - resid(modelo_0, type = 'martingale')
+  ), status1) ~ 1), type = 'kaplan-meier')
+plot(
+  aux1$time,
+  -log(aux1$surv),
+  type = 's',
+  xlab = 'Residuos de Cox-Snell',
+  ylab = 'Residuos acumulados',
+  main = 'Reisgos proporcionales, modelo base',
+  col = 'blue',
+  lwd = 1.8
+)
+abline(0, 1, col = 'purple', lwd = 2)
+
+#Cox.zph
+par(mfrow = c(2,2))
+
+# Numéricas
+plot(
+  cox.zph(modelo_bien),
+  var = "pbc_sna_sda$age",
+  main = "Edad",
+  col = c("orange", "green", "green"),
+  lwd = 2,
+  ylab = ""
+)
+abline(h = 0, col = "red", lwd = 1.8)
+
+plot(
+  cox.zph(modelo_bien),
+  var = "pbc_sna_sda$albumin",
+  main = "Albumina",
+  col = c("orange", "green", "green"),
+  lwd = 2,
+  ylab = ""
+)
+abline(h = 0, col = "red", lwd = 1.8)
+
+plot(
+  cox.zph(modelo_bien),
+  var = "pbc_sna_sda$ast",
+  main = "Aspartato aminotransferasa",
+  col = c("orange", "green", "green"),
+  lwd = 2,
+  ylab = ""
+)
+abline(h = 0, col = "red", lwd = 1.8)
+
+plot(
+  cox.zph(modelo_bien),
+  var = "pbc_sna_sda$copper",
+  main = "Cobre en orina",
+  col = c("orange", "green", "green"),
+  lwd = 2,
+  ylab = ""
+)
+abline(h = 0, col = "red", lwd = 1.8)
+
+plot(
+  cox.zph(modelo_bien),
+  var = "pbc_sna_sda$platelet",
+  main = "Plaquetas en sangre",
+  col = c("orange", "green", "green"),
+  lwd = 2,
+  ylab = ""
+)
+abline(h = 0, col = "red", lwd = 1.8)
 
 
 
+# Categóricas
 
+plot(
+  cox.zph(modelo_bien),
+  var = "pbc_sna_sda$ascites",
+  main = "Líquido en la cavidad abdominal",
+  col = c("purple", "violet", "violet"),
+  lwd = 2,
+  ylab = ""
+)
+abline(h = 0, col = "blue", lwd = 1.8)
 
+plot(
+  cox.zph(modelo_bien),
+  var = "pbc_sna_sda$edema",
+  main = "Edema",
+  col = c("purple", "violet", "violet"),
+  lwd = 2,
+  ylab = ""
+)
+abline(h = 0, col = "blue", lwd = 1.8)
 
+plot(
+  cox.zph(modelo_bien),
+  var = "pbc_sna_sda$hepato",
+  main = "Alargamiento del hígado",
+  col = c("purple", "violet", "violet"),
+  lwd = 2,
+  ylab = ""
+)
+abline(h = 0, col = "blue", lwd = 1.8)
 
+plot(
+  cox.zph(modelo_bien),
+  var = "pbc_sna_sda$spiders",
+  main = "Várices",
+  col = c("purple", "violet", "violet"),
+  lwd = 2,
+  ylab = ""
+)
+abline(h = 0, col = "blue", lwd = 1.8)
 
+plot(
+  cox.zph(modelo_bien),
+  var = "pbc_sna_sda$stage",
+  main = "Estado de bienestar",
+  col = c("purple", "violet", "violet"),
+  lwd = 2,
+  ylab = ""
+)
+abline(h = 0, col = "blue", lwd = 1.8)
 
-
-
-
+par(mfrow = c(1,1))
