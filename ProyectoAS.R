@@ -889,14 +889,14 @@ modelo <- coxph(Surv(pbc_sna$time, status1)~
 # H0: los riesgos son proporcionales vs H1: los riesgos NO SON proporcionales
 cox.zph(modelo)
 df <- data.frame(modelo$coefficients, 
-                 confint(modelo, level = .9),
+                 confint(modelo, level = .95),
                  exp(modelo$coefficients),
                  row.names = c('age', 'albumin', 'ast', 
                               'copper', 'platelet', 'ascites1',
                               'edema0.5','edema1', 'hepato1', 
                               'spiders1', 'stage2','stage3',
                               'stage4') )
-colnames(df) <- c('Coeficientes', '5%', '95%', 'Exp(Coef)')
+colnames(df) <- c('Coeficientes', '2.5%', '97.5%', 'Exp(Coef)')
 df
 
 # ¿Las variables tienen efecto en el modelo?
