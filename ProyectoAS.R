@@ -103,13 +103,12 @@ g7 <-
 g8 <-
   ggplot(pbc_sna, aes(x = stage)) + geom_bar(fill = colores) + ggtitle("Stage") +
   theme_classic()
-grid.arrange(g1, g2, g3, g4, g5, g6, g7, g8, ncol = 4)
+grid.arrange(g1,g2, g3, g4, g5, g6, g7, g8, ncol = 4)
 
 # Variables numéricas                   ----
 #Dado que tenemos muchas variables numéricas y es iterativa la forma de hacer las gráficas
 #hemos decidido automatixar el procesos de graficado para que no se extienda demasiado el
 #código:
-
 variables_num <- c(5, 11, 12, 13, 14, 15, 16, 17, 18, 19)
 nombres <- colnames(pbc_sna)[variables_num]
 low_color <-
@@ -139,10 +138,8 @@ high_color <-
     '#622415',
     '#202143'
   )
-h_c <- list(10)
-for (i in 1:10) {
-  h_c[[i]] <-
-    ggplot(pbc, aes(x = pbc_sna[, variables_num[i]], fill = ..x..)) +
+hist_c <- function(i){
+  ggplot(pbc_sna, aes(x = pbc_sna[, nombres[i]], fill = ..x..)) +
     geom_histogram(
       aes(y = ..density..) ,
       bins = 10,
@@ -174,10 +171,11 @@ for (i in 1:10) {
       legend.position = "none"
     )
 }
-grid.arrange(h_c[[1]], h_c[[2]], h_c[[3]], h_c[[4]], h_c[[5]], h_c[[6]], ncol =
+h_c <- list(10)
+h_c<-lapply(1:10, hist_c)
+grid.arrange(h_c[[1]], h_c[[4]], h_c[[7]], h_c[[9]], h_c[[10]], h_c[[6]], ncol =
                3)
-grid.arrange(h_c[[7]], h_c[[8]], h_c[[9]], h_c[[10]], ncol = 2)
-
+grid.arrange(h_c[[2]], h_c[[3]], h_c[[5]], h_c[[8]], ncol = 2)
 # Comentario                            ----
 #Dado que, además de tener falla y censura en el estudio, se considera el transplante
 #de hígado, vamos a agruparlo como censura. La razón es que cuando un paciente que
@@ -235,6 +233,7 @@ fit_age <-
   survfit(Surv(pbc_sna$time, status1) ~ grupos_age,
           type = "kaplan-meier",
           conf.type = "plain")
+
 #Gráfico
 g_age <-
   ggsurvplot(
@@ -903,7 +902,7 @@ df
 
 # Residuos martingala: notar linealidad ----
 residuos_mtg <- residuals(modelo,type='martingale')
-par(mfrow = c(1,2))
+par(mfrow = c(2,2))
 #Age
 plot(
   pbc_sna$age,
@@ -1075,6 +1074,8 @@ modelo_bien <- coxph(Surv(pbc_sna_sda$time, status_bien)~
 # un modelo de Cox (riesgos proporcionales).
 residuos_bien_mtg <- residuals(modelo_bien, type='martingale')
 residuos_bien_dfbetas <- resid(modelo_bien, type = "dfbeta")
+
+par(mfrow = c(2,2))
 #Age
 plot(
   pbc_sna_sda$age,
@@ -1299,3 +1300,4 @@ plot(
 abline(h = 0, col = "blue", lwd = 1.8)
 
 par(mfrow = c(1,1))
+
